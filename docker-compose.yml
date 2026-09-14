@@ -1,0 +1,53 @@
+services:
+  mysql_db:
+    image: mysql:8.0
+    container_name: blog_mysql_db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: changeme
+      MYSQL_DATABASE: blog_platform
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  backend_api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: blog_backend_api
+    restart: unless-stopped
+    depends_on:
+      - mysql_db
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: mysql_db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: changeme
+      DB_NAME: blog_platform
+    command: npm start
+
+  frontend_web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: blog_frontend_web
+    restart: unless-stopped
+    depends_on:
+      - backend_api
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env.local
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5000/api
+      BACKEND_API_URL: http://backend_api:5000/api
+    command: npm run dev -- --hostname 0.0.0.0 --port 3000
+
+volumes:
+  mysql_data:
