@@ -19,6 +19,7 @@ pnpm-debug.log*
 !.env.example
 backend/.env
 backend/.env.*
+!backend/.env.test.example
 frontend/.env.local
 frontend/.env.*
 !frontend/.env.example

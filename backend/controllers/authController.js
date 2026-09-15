@@ -40,22 +40,23 @@ async function register(req, res, next) {
 
     const passwordHash = await bcrypt.hash(validated.password, 10);
 
+    const role = "author";
     const [result] = await db.execute(
       "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
-      [validated.name, validated.email, passwordHash, "reader"],
+      [validated.name, validated.email, passwordHash, role],
     );
 
     const user = {
       id: result.insertId,
       name: validated.name,
       email: validated.email,
-      role: "reader",
+      role,
     };
 
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
-      data: { user, token: generateToken(user) },
+      data: { user },
     });
   } catch (error) {
     return next(error);
