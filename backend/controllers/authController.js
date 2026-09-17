@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { z } = require("zod");
 const db = require("../config/database");
+const { getJwtSecret } = require("../config/security");
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, "Name is required"),
@@ -17,7 +18,7 @@ const loginSchema = z.object({
 function generateToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, role: user.role },
-    process.env.JWT_SECRET || "your-secret-key-here",
+    getJwtSecret(),
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" },
   );
 }

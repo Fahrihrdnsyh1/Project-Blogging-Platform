@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import api from "@/lib/api";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import Textarea from "@/components/ui/Textarea";
 
 type CommentNode = {
   id: number;
@@ -107,14 +110,14 @@ export default function CommentSection({
       <div
         key={comment.id}
         className="space-y-3"
-        style={{ marginLeft: depth * 18 }}
+        style={{ marginLeft: Math.min(depth * 12, 48) }}
       >
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div className="border-2 border-ink bg-sky p-4">
           <div className="mb-2 flex items-center justify-between gap-2 text-sm">
-            <span className="font-semibold text-slate-800">
+            <span className="font-display font-bold text-ink">
               {comment.user_name || "User"}
             </span>
-            <span className="text-slate-500">
+            <span className="font-body text-xs text-ink/60">
               {new Date(comment.created_at).toLocaleDateString("id-ID", {
                 day: "numeric",
                 month: "short",
@@ -122,37 +125,38 @@ export default function CommentSection({
               })}
             </span>
           </div>
-          <p className="whitespace-pre-wrap text-slate-700">
+          <p className="whitespace-pre-wrap font-body text-ink/80">
             {comment.content}
           </p>
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={() =>
               setReplyTo(replyTo === comment.id ? null : comment.id)
             }
-            className="mt-3 text-sm font-medium text-blue-700 hover:text-blue-900"
+            className="mt-3 min-h-9 px-3 py-1.5 text-xs"
           >
             Balas
-          </button>
+          </Button>
           {replyTo === comment.id ? (
             <form
               onSubmit={(event) => submitComment(event, comment.id)}
               className="mt-3 space-y-2"
             >
-              <textarea
+              <Textarea
                 value={replyContent}
                 onChange={(event) => setReplyContent(event.target.value)}
                 placeholder="Tulis balasan..."
-                className="min-h-20 w-full rounded-lg border border-slate-300 p-3 text-sm focus:border-blue-500 focus:outline-none"
+                className="min-h-20 text-sm"
                 required
               />
-              <button
+              <Button
                 type="submit"
                 disabled={loading}
-                className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="min-h-9 px-3 py-1.5 text-xs"
               >
                 Kirim balasan
-              </button>
+              </Button>
             </form>
           ) : null}
         </div>
@@ -163,47 +167,54 @@ export default function CommentSection({
     ));
 
   return (
-    <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-5 text-2xl font-bold text-slate-900">
+    <Card as="section" className="mt-10 p-5 sm:p-6">
+      <h2 className="mb-5 font-display text-2xl font-black text-ink">
         Komentar ({countComments(comments)})
       </h2>
 
       {message ? (
-        <p className="mb-4 text-sm text-green-700">{message}</p>
+        <p className="mb-4 border-2 border-ink bg-mint p-3 font-body text-sm text-ink">
+          {message}
+        </p>
       ) : null}
-      {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="mb-4 border-2 border-ink bg-coral p-3 font-body text-sm text-ink">
+          {error}
+        </p>
+      ) : null}
 
       <form onSubmit={submitComment} className="mb-6 space-y-3">
-        <textarea
+        <Textarea
           value={content}
           onChange={(event) => setContent(event.target.value)}
           placeholder="Tulis komentar..."
-          className="min-h-24 w-full rounded-xl border border-slate-300 p-3 focus:border-blue-500 focus:outline-none"
+          className="min-h-24"
           required
         />
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
+        <Button type="submit" disabled={loading}>
           Kirim komentar
-        </button>
+        </Button>
       </form>
 
       {comments.length === 0 ? (
-        <p className="text-slate-500">Belum ada komentar untuk artikel ini.</p>
+        <p className="font-body text-ink/60">
+          Belum ada komentar untuk artikel ini.
+        </p>
       ) : (
         <div className="space-y-4">{renderComments(comments)}</div>
       )}
 
       {!isAuthenticated ? (
-        <p className="mt-4 text-sm text-slate-500">
+        <p className="mt-4 font-body text-sm text-ink/60">
           Belum login?{" "}
-          <Link href="/login" className="font-medium text-blue-700">
+          <Link
+            href="/login"
+            className="font-display font-bold text-ink underline decoration-2 underline-offset-4 hover:bg-butter"
+          >
             Login untuk berkomentar.
           </Link>
         </p>
       ) : null}
-    </section>
+    </Card>
   );
 }

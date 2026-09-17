@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const request = require("supertest");
 const app = require("../app");
 const db = require("../config/database");
@@ -20,6 +21,21 @@ async function registerUser(overrides = {}) {
 
   const response = await request(app).post("/api/auth/register").send(user);
   return { user, response };
+}
+
+async function getAuthToken() {
+  const email = uniqueEmail("upload-user");
+  const passwordHash = await bcrypt.hash("Testing123!", 10);
+  const [result] = await db.execute(
+    "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)",
+    ["Upload Tester", email, passwordHash, "author"],
+  );
+
+  return jwt.sign(
+    { id: result.insertId, email, role: "author" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" },
+  );
 }
 
 beforeEach(async () => {
@@ -131,5 +147,35 @@ describe("Post endpoints", () => {
       success: false,
       message: "Unauthorized",
     });
+  });
+});
+
+describe("Upload endpoint", () => {
+  test("rejects unsupported file types", async () => {
+    const token = await getAuthToken();
+    const response = await request(app)
+      .post("/api/upload")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("image", Buffer.from("not an image"), {
+        filename: "payload.exe",
+        contentType: "application/octet-stream",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toMatch(/valid JPG/i);
+  });
+
+  test("rejects files larger than 2MB", async () => {
+    const token = await getAuthToken();
+    const response = await request(app)
+      .post("/api/upload")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("image", Buffer.alloc(2 * 1024 * 1024 + 1), {
+        filename: "large.png",
+        contentType: "image/png",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Image must be 2MB or smaller");
   });
 });
